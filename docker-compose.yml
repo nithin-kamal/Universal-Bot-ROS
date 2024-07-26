@@ -1,0 +1,45 @@
+
+version: "3.3"
+
+services:
+
+  motion-service:
+    container_name: motion-service
+    ########
+    # Task 5:
+    # Insert the build context
+    ########
+    build:
+      context: < insert build context here >
+      dockerfile: ./Dockerfile
+    image: ur_robot/robot_docker:latest
+    privileged: true
+    network_mode: host
+    command:  roslaunch ur10e_moveit_config ur10e_moveit_planning_execution.launch 
+
+  scan-service:
+    container_name: scan-service
+    depends_on: 
+      motion-service:
+        condition: service_started
+    privileged: true
+    network_mode: host
+    image: ur_robot/robot_docker:latest
+    restart: always
+    command:  roslaunch create_environment scan_map.launch 
+
+  rviz-service:
+    container_name: rviz-service
+    depends_on: 
+      motion-service:
+        condition: service_started
+    privileged: true
+    network_mode: host
+    image: ur_robot/robot_docker:latest
+    restart: always
+    environment:
+      - "DISPLAY=:0"
+      - "QT_DEBUG_PLUGINS=1"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command:  roslaunch ur10e_moveit_config moveit_rviz.launch 
